@@ -1,4 +1,4 @@
-from langchain_groq import ChatGroq
+from langchain_groq import ChatGroq  # ✅ correcto
 
 # Crea el LLM Groq con LangChain
 
