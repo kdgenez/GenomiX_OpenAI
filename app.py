@@ -1,4 +1,7 @@
+import os
 import streamlit as st
+from src.utils import get_llm
+from src.agents.biology_agent import build_biology_agent
 
 # ======== CONFIGURACIÓN =========
 st.set_page_config(
@@ -63,20 +66,7 @@ with col2:
 
 st.write("---")
 
-# ======== SIMULACIÓN DE CHAT =========
-st.subheader("💬 Conversación con GenomiX")
 
-user_input = st.text_input("Escribe tu pregunta biológica:", placeholder="Ejemplo: ¿Cómo funciona la fotosíntesis?")
-
-if user_input:
-    st.markdown(f"<div class='chat-box user-query'>👤 Tú: {user_input}</div>", unsafe_allow_html=True)
-    respuesta = """
-    🔬 <span class='bot-response'>GenomiX:</span>  
-    La fotosíntesis es un proceso mediante el cual las plantas convierten la energía de la luz en energía química.  
-    Si lo pensamos como una fábrica, la luz es la fuente de energía, el CO₂ es la materia prima  
-    y la glucosa es el producto terminado que alimenta al organismo.
-    """
-    st.markdown(f"<div class='chat-box'>{respuesta}</div>", unsafe_allow_html=True)
 
 # ======== SIDEBAR =========
 st.sidebar.image("assets/logo.png", width=100)
@@ -88,3 +78,35 @@ st.sidebar.markdown(f"- Verde: {GENOMIX_COLORS['verde']}")
 st.sidebar.markdown(f"- Gris: {GENOMIX_COLORS['gris']}")
 st.sidebar.write("---")
 st.sidebar.info("💡 Este es un mockup visual. El modelo LLM se integrará en la versión final con Groq.")
+
+with st.sidebar:
+    st.header("⚙️ Configuración")
+    
+    # Ingreso manual de API Key
+    if "api_key" not in st.session_state:
+        st.session_state.api_key = ""
+    user_api_key = st.text_input("🔑 Tu GROQ_API_KEY", type="password", value=st.session_state.api_key)
+    if user_api_key:
+        st.session_state.api_key = user_api_key
+
+    default_model = st.session_state.get("model", "llama-3.1-8b-instant")
+    model = st.selectbox(
+        "Modelo Groq",
+        [
+            "llama-3.1-8b-instant",
+            "llama-3.1-70b-versatile",
+            "mixtral-8x7b-32768",
+            "gemma2-9b-it",
+        ],
+        index=["llama-3.1-8b-instant","llama-3.1-70b-versatile","mixtral-8x7b-32768","gemma2-9b-it"].index(default_model)
+    )
+    st.session_state["model"] = model
+
+    detail = st.radio("Nivel de detalle", ["breve", "intermedio", "profundo"], index=1)
+    show_thoughts = st.checkbox("Mostrar trazas del agente (pasos y herramientas)", value=True)
+
+# Determinar si hay clave válida
+api_key = st.session_state.api_key or st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
+if not api_key:
+    st.error("Por favor ingresa tu GROQ_API_KEY en la barra lateral o en secrets para continuar.")
+    st.stop()
