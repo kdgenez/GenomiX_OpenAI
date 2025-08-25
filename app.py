@@ -2,22 +2,15 @@ import os
 import streamlit as st
 from src.utils import get_llm
 from src.agents.biology_agent import build_biology_agent
-from langchain_groq import ChatGroq
-from langchain.prompts import ChatPromptTemplate
 
 # ======== CONFIGURACIÓN =========
 st.set_page_config(
     page_title="GenomiX - Donde la biología se encuentra con la inteligencia.",
-    page_icon="assets/favicon.png",
+    page_icon="🧬",  # fallback si no encuentra favicon
     layout="centered",
 )
 
-# Logo y título
-st.image("assets/logo.png", width=200)
-st.title("🧬 GenomiX - Agente Experto en Biología")
-st.markdown("Agente experto en biología, capaz de explicar procesos complejos, identificar especies y responder preguntas científicas con precisión.")
-
-# Paleta de colores GenomiX
+# ======== IDENTIDAD VISUAL =========
 GENOMIX_COLORS = {
     "azul": "#1B365D",       # rigor académico
     "cian": "#00C2D1",       # tecnología
@@ -25,7 +18,6 @@ GENOMIX_COLORS = {
     "gris": "#4D4D4D"        # equilibrio
 }
 
-# CSS para identidad visual
 st.markdown(f"""
     <style>
         body {{
@@ -45,21 +37,6 @@ st.markdown(f"""
             text-align: center;
             margin-bottom: 2rem;
         }}
-        .chat-box {{
-            background-color: #F9F9F9;
-            border: 1px solid {GENOMIX_COLORS['cian']};
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-        }}
-        .bot-response {{
-            color: {GENOMIX_COLORS['azul']};
-            font-weight: 500;
-        }}
-        .user-query {{
-            color: {GENOMIX_COLORS['verde']};
-            font-style: italic;
-        }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -67,14 +44,19 @@ st.markdown(f"""
 st.markdown('<div class="title-genomix">GenomiX 🔬</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle-genomix">"Donde la biología se encuentra con la inteligencia"</div>', unsafe_allow_html=True)
 
-col1, col2, col3 = st.columns([1,2,1])
-with col2:
-    st.image("assets/logo.png", width=200)
+# Logo centrado (si existe en /assets)
+logo_path = "assets/logo.png"
+if os.path.exists(logo_path):
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.image(logo_path, width=200)
 
 st.write("---")
 
 # ======== SIDEBAR =========
-st.sidebar.image("assets/logo.png", width=100)
+if os.path.exists(logo_path):
+    st.sidebar.image(logo_path, width=100)
+
 st.sidebar.title("⚙️ Configuración")
 st.sidebar.markdown("**GenomiX - Identidad de Marca**")
 st.sidebar.markdown(f"- Azul: {GENOMIX_COLORS['azul']}")
@@ -82,17 +64,17 @@ st.sidebar.markdown(f"- Cian: {GENOMIX_COLORS['cian']}")
 st.sidebar.markdown(f"- Verde: {GENOMIX_COLORS['verde']}")
 st.sidebar.markdown(f"- Gris: {GENOMIX_COLORS['gris']}")
 st.sidebar.write("---")
-st.sidebar.info("💡 Este es un mockup visual. El modelo LLM se integrará en la versión final con Groq.")
 
 with st.sidebar:
-    st.header("⚙️ Configuración")
-    
+    st.header("🔑 Conexión con Groq")
+
     # Ingreso manual de API Key
     if "api_key" not in st.session_state:
         st.session_state.api_key = ""
-    user_api_key = st.text_input("🔑 Tu GROQ_API_KEY", type="password", value=st.session_state.api_key)
+    user_api_key = st.text_input("Tu GROQ_API_KEY", type="password", value=st.session_state.api_key)
     if user_api_key:
         st.session_state.api_key = user_api_key
+        st.success("✅ Clave ingresada")
 
     default_model = st.session_state.get("model", "llama-3.1-8b-instant")
     model = st.selectbox(
@@ -110,17 +92,17 @@ with st.sidebar:
     detail = st.radio("Nivel de detalle", ["breve", "intermedio", "profundo"], index=1)
     show_thoughts = st.checkbox("Mostrar trazas del agente (pasos y herramientas)", value=True)
 
-# Determinar si hay clave válida
+# ======== VALIDACIÓN API KEY =========
 api_key = st.session_state.api_key or st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
 if not api_key:
-    st.error("Por favor ingresa tu GROQ_API_KEY en la barra lateral o en secrets para continuar.")
+    st.warning("⚠️ Ingresa tu GROQ_API_KEY en la barra lateral o en `.streamlit/secrets.toml`.")
     st.stop()
 
-# Inicializa LLM y agente
+# ======== INICIALIZA AGENTE =========
 llm = get_llm(model, api_key)
 agent = build_biology_agent(llm, verbose=show_thoughts)
 
-# Historial de chat
+# ======== CHAT =========
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
