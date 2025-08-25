@@ -2,13 +2,20 @@ import os
 import streamlit as st
 from src.utils import get_llm
 from src.agents.biology_agent import build_biology_agent
+from langchain_groq import ChatGroq
+from langchain.prompts import ChatPromptTemplate
 
 # ======== CONFIGURACIÓN =========
 st.set_page_config(
-    page_title="GenomiX - Agente de Biología",
+    page_title="GenomiX - Donde la biología se encuentra con la inteligencia.",
     page_icon="assets/favicon.png",
-    layout="wide"
+    layout="centered",
 )
+
+# Logo y título
+st.image("assets/logo.png", width=200)
+st.title("🧬 GenomiX - Agente Experto en Biología")
+st.markdown("Agente experto en biología, capaz de explicar procesos complejos, identificar especies y responder preguntas científicas con precisión.")
 
 # Paleta de colores GenomiX
 GENOMIX_COLORS = {
@@ -65,8 +72,6 @@ with col2:
     st.image("assets/logo.png", width=200)
 
 st.write("---")
-
-
 
 # ======== SIDEBAR =========
 st.sidebar.image("assets/logo.png", width=100)
